@@ -18,47 +18,30 @@ typedef std::vector< std::list<int> > adjList; //Adjacency list disregarding the
 
 //######################## DEFINING FUNCTIONS ####################
 adjList buildAdjacencyList(std::vector<VERTEX> &sourceGraph);
-void printAdjacencyList(adjList &sourceToPrint);
+std::list< std::list< int > > get_adjList(NETWORK &graph);
+void printAdjacencyList(std::list< std::list< int > > &sourceToPrint);
 void printMaxToMinDegree(std::vector<VERTEX> &adjListSource);
 std::vector<VERTEX> sortMaxToMin(std::vector<VERTEX> &source);
+std::list< std::list< int > > powerGraph(std::list<int> &source);
+bool isConnected(std::list<int> candidate, std::list< std::list<int> > graph);
+std::list< std::list<int> > allMaximalCliques(NETWORK &graph);
 
 // ###################### MAIN ###################################
 int main(int argc, char** argv)
 {
-	adjList adjacencyList;
-	std::list<int> elemList;
+	std::list< std::list<int> > adjacencyList;
 	std::list< std::list<int> > graphPowerSet;
 	NETWORK graph("karate.gml");	
 	
-//	adjacencyList = buildAdjacencyList((graph.vertex));
-//	std::cout << "\t\tADJACENCY LIST - PRINTING" << std::endl;
-//	printAdjacencyList(adjacencyList);
-//	std::cout << std::endl;
+	adjacencyList = get_adjList(graph);
+	std::cout << "\t\tADJACENCY LIST - PRINTING" << std::endl;
+	printAdjacencyList(adjacencyList);
 
-//	std::cout << "\t\tGRAPH - PRINTING MAX TO MIN" << std::endl;
-//	printMaxToMinDegree(graph.vertex);
-//	std::cout << std::endl;
-
-//THE FOLLOWING PART IS DOING SOMETHING BUT NOT WHAT I HAD EXPECTED - REDO IT
-	// listOfEdges = graph.convertToList();
-	for(int i = 0; i < 6; ++i)
-		elemList.push_back(i + 1);
-
-	graphPowerSet = graph.powerSetOfGraph(elemList);
-	std::cout << "\t\tPOWERSET OF GRAPH - of size " << graphPowerSet.size() << std::endl;
-	for(std::list< std::list<int>>::iterator it = graphPowerSet.begin(); it != graphPowerSet.end(); ++it)
-	{
-		for(auto v : (*it))
-		{
-			std::cout << v << " ";
-		}
-		std::cout << std::endl;
-	}
 	return 0;
 }
 
 // ######################## FUNCTIONS ############################
- adjList buildAdjacencyList(std::vector<VERTEX> &sourceGraph)
+adjList buildAdjacencyList(std::vector<VERTEX> &sourceGraph)
 {
 	try
 	{
@@ -81,12 +64,14 @@ int main(int argc, char** argv)
 	}
 }
 
-void printAdjacencyList(adjList &sourceToPrint)
+void printAdjacencyList(std::list< std::list<int> > &sourceToPrint)
 {
-	for(unsigned int it = 0; it < sourceToPrint.size(); ++it)
+	int i= 0;
+	for(std::list< std::list<int>>::iterator it = sourceToPrint.begin(); it != sourceToPrint.end(); ++it)
 	{
-		std::cout << "VERTEX " << (it + 1) << std::endl;
-		for(std::list<int>::iterator jt = sourceToPrint[it].begin(); jt != sourceToPrint[it].end(); ++jt)
+		++i;
+		std::cout << "VERTEX " << i << std::endl;
+		for(std::list<int>::iterator jt = (*it).begin(); jt != (*it).end(); ++jt)
 		{
 			std::cout << "\tEDGE TO " << (*jt) << std::endl;
 		}
@@ -134,5 +119,105 @@ void printMaxToMinDegree(std::vector<VERTEX> &adjListSource)
 		throw e.what();
 	}
 }
+std::list< std::list< int > > get_adjList(NETWORK &graph)	// auxiliar function in finding maximal and maximum cliques
+{
+	try
+	{
+		std::vector< std::list< int > > list((graph.vertex.size()) + 1);
+		std::list< std::list< int > > listToReturn;
 
-void findMaximalClique(std::vector<int> R, std::vector<int> P, std::vector<int> X);
+		// Converts from VERTEX to vector of lists
+		for(std::vector<VERTEX>::iterator it = graph.vertex.begin(); it != graph.vertex.end(); ++it) // goes through the vector for each vertex
+		{
+
+			for(std::list< std::pair< int, int > >::iterator jt = (*it).edge.begin(); jt != (*it).edge.end(); ++jt) // goes through the list for each edge
+			{
+				list[((*it).id) - 1].push_back((*jt).first);	//makes first link	v1 --> v2 | only 1 representative link will be made btw nodes
+				list[((*jt).first) - 1].push_back((*it).id);	//makes second link	v2 --> v1
+			}
+		}
+
+		// Converts from vector of lists to list of lists | it will be needed when getting the power sets of the graph
+		for(std::vector<std::list< int > >::iterator it = list.begin(); it != list.end(); ++it)
+		{
+			listToReturn.push_back((*it));
+		}
+		return listToReturn;
+	}
+	catch(std::exception e)
+	{
+		throw e.what();
+	}
+}
+
+std::list< std::list< int > > powerGraph(std::list<int> &source) //return all possible sub-graphs of source
+{
+
+	std::list< std::list<int> > smaller;
+	std::list< std::list<int> > allOfThem;
+	std::list< std::list<int> > withElement;
+	std::list<int> buffer;
+	std::list<int> element;
+
+	if(source.size() == 0)
+		return {{}};
+	else
+	{
+		element = {source.front()};	// saves first element
+		source.pop_front();	//removes from list
+		for(std::list<int>::iterator it = source.begin(); it != source.end(); ++it) // iterate through the remaining list
+		{
+			buffer = element;
+			buffer.insert(buffer.end(), it, source.end());	//for each sublist, it pairs with the initial element
+			withElement.push_back(buffer);		//adds to the list of all solutions with the previously removed element
+		}
+		smaller.splice(smaller.end(), powerGraph(source)) ;	//does the same recursively to the sublist
+		allOfThem.splice(allOfThem.end(), withElement);
+		allOfThem.insert(allOfThem.end(), smaller.begin(), smaller.end());
+		allOfThem.push_back(element);
+		return allOfThem;
+	}
+}
+
+bool isConnected(std::list<int> candidate, std::vector< std::list<int> > graph)
+{	
+	for(std::list<int>::iterator it = candidate.begin(); it != candidate.end(); ++it)
+	{
+		for(std::list<int>::iterator jt = candidate.begin(); jt != candidate.end(); ++jt)
+		{
+			if(jt != it)
+			{
+				if(std::find(graph[(*it)].begin(), graph[(*it)].end(), (*jt)) == graph[(*it)].end())
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+std::list< std::list<int> > allMaximalCliques(NETWORK &graph)
+{
+	std::vector< std::list<int> > adjacencyList = buildAdjacencyList(graph.vertex);
+	std::list< std::list<int> > powerG;
+	std::list< std::list<int> > allCliques;
+	std::list<int> buffer;
+
+	for(int i = 0; i < graph.nvertices; ++i)	//initializing a list with all the nodes represented
+	{											// required for creating the powergraph
+		buffer.push_back(i + 1);
+	}
+	powerG = powerGraph(buffer);				//powerGraph created
+
+	for(std::list< std::list<int> >::iterator it = powerG.begin(); it != powerG.end(); ++it)
+	{
+		if(isConnected((*it), adjacencyList))
+		{
+			allCliques.push_back((*it));
+			for(auto v : allCliques.back())
+				std::cout << v << std::endl;
+		}
+	}
+	return allCliques;
+}

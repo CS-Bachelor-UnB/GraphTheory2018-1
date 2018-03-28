@@ -30,8 +30,7 @@ class NETWORK
 		NETWORK(void);
 		NETWORK(const char* fileName);
 		~NETWORK();
-		std::list< std::list< int > > convertToList(void);
-		std::list< std::list< int > > powerSetOfGraph(std::list<int> &source);
+		
 
 	private:
 		int findVertices(const char* fileName);

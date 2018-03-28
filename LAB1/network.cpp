@@ -85,64 +85,6 @@ void NETWORK::populateGraph(const char* fileName)
 	}
 }
 
-std::list< std::list< int > > NETWORK::convertToList(void)	// auxiliar function in finding maximal and maximum cliques
-{
-	try
-	{
-		std::vector< std::list< int > > adjList((this->vertex.size()) + 1);
-		std::list< std::list< int > > listToReturn;
-
-		// Converts from VERTEX to vector of lists
-		for(std::vector<VERTEX>::iterator it = this->vertex.begin(); it != this->vertex.end(); ++it) // goes through the vector for each vertex
-		{
-
-			for(std::list< std::pair< int, int > >::iterator jt = (*it).edge.begin(); jt != (*it).edge.end(); ++jt) // goes through the list for each edge
-			{
-				adjList[((*it).id) - 1].push_back((*jt).first);	//makes first link	v1 --> v2 | only 1 representative link will be made btw nodes
-				//newAdjList[((*jt).first) - 1].push_back((*it).id);	//makes second link	v2 --> v1
-			}
-		}
-
-		// Converts from vector of lists to list of lists | it will be needed when getting the power sets of the graph
-		for(std::vector<std::list< int > >::iterator it = adjList.begin(); it != adjList.end(); ++it)
-		{
-			listToReturn.push_back((*it));
-		}
-		return listToReturn;
-	}
-	catch(std::exception e)
-	{
-		throw e.what();
-	}
-}
-
-std::list< std::list< int > > NETWORK::powerSetOfGraph(std::list<int> &source) //return all possible sub-graphs of source
-{
-
-	std::list< std::list<int> > smaller;
-	std::list< std::list<int> > allOfThem;
-	std::list< std::list<int> > withElement;
-	std::list<int> buffer;
-	std::list<int> element;
-
-	if(source.size() == 0)
-		return {{}};
-	else
-	{
-		element = {source.front()};
-		source.pop_front();
-		for(std::list<int>::iterator it = source.begin(); it != source.end(); ++it)
-		{
-			buffer = element;
-			buffer.insert(buffer.end(), it, source.end());
-			withElement.push_back(buffer);
-		}
-		smaller = powerSetOfGraph(source);
-		allOfThem = withElement;
-		allOfThem.insert(allOfThem.end(), smaller.begin(), smaller.end());
-		return allOfThem;
-	}
-}
 
 NETWORK::NETWORK (void)
 {
