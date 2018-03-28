@@ -26,11 +26,34 @@ std::vector<VERTEX> sortMaxToMin(std::vector<VERTEX> &source);
 int main(int argc, char** argv)
 {
 	adjList adjacencyList;
+	std::list<int> elemList;
+	std::list< std::list<int> > graphPowerSet;
 	NETWORK graph("karate.gml");	
 	
-	adjacencyList = buildAdjacencyList((graph.vertex));
-	printAdjacencyList(adjacencyList);
+//	adjacencyList = buildAdjacencyList((graph.vertex));
+//	std::cout << "\t\tADJACENCY LIST - PRINTING" << std::endl;
+//	printAdjacencyList(adjacencyList);
+//	std::cout << std::endl;
+
+//	std::cout << "\t\tGRAPH - PRINTING MAX TO MIN" << std::endl;
 //	printMaxToMinDegree(graph.vertex);
+//	std::cout << std::endl;
+
+//THE FOLLOWING PART IS DOING SOMETHING BUT NOT WHAT I HAD EXPECTED - REDO IT
+	// listOfEdges = graph.convertToList();
+	for(int i = 0; i < 6; ++i)
+		elemList.push_back(i + 1);
+
+	graphPowerSet = graph.powerSetOfGraph(elemList);
+	std::cout << "\t\tPOWERSET OF GRAPH - of size " << graphPowerSet.size() << std::endl;
+	for(std::list< std::list<int>>::iterator it = graphPowerSet.begin(); it != graphPowerSet.end(); ++it)
+	{
+		for(auto v : (*it))
+		{
+			std::cout << v << " ";
+		}
+		std::cout << std::endl;
+	}
 	return 0;
 }
 

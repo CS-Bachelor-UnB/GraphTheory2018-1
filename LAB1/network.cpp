@@ -116,29 +116,33 @@ std::list< std::list< int > > NETWORK::convertToList(void)	// auxiliar function 
 	}
 }
 
-// std::list< std::list< int > > NETWORK::powerSetOfGraph(void) //return all possible sub-graphs of source
-// {
-// 	std::list< std::list< int > > listFromGraph = this->convertToList();
-// 	std::list< std::list< int > > smaller;	I HAVE TO TRANSFORM IT INTO VECTOR<LIST<INT>>
-// 	std::list< std::list< int > > withElement;
-// 	std::list<int>	element
+std::list< std::list< int > > NETWORK::powerSetOfGraph(std::list<int> &source) //return all possible sub-graphs of source
+{
 
-// 	if(copyFromSource.size() == 0)
-// 	{
-// 		return {};
-// 	}
-// 	else
-// 	{
-// 		element = listFromGraph.front();
-// 		listFromGraph.pop_front();
-// 		smaller = powerSetOfGraph(listFromGraph);
-// 		for(std::list< std::list< int > >::iterator it = smaller.begin(); it != smaller.end(); ++it)
-// 		{
-// 			withElement.push_back();	// <<-------- CONTINUE FROM HERE!!!
-// 		}
-// 		return 0;
-// 	}
-// }
+	std::list< std::list<int> > smaller;
+	std::list< std::list<int> > allOfThem;
+	std::list< std::list<int> > withElement;
+	std::list<int> buffer;
+	std::list<int> element;
+
+	if(source.size() == 0)
+		return {{}};
+	else
+	{
+		element = {source.front()};
+		source.pop_front();
+		for(std::list<int>::iterator it = source.begin(); it != source.end(); ++it)
+		{
+			buffer = element;
+			buffer.insert(buffer.end(), it, source.end());
+			withElement.push_back(buffer);
+		}
+		smaller = powerSetOfGraph(source);
+		allOfThem = withElement;
+		allOfThem.insert(allOfThem.end(), smaller.begin(), smaller.end());
+		return allOfThem;
+	}
+}
 
 NETWORK::NETWORK (void)
 {
