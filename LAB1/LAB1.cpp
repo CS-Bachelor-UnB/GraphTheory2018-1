@@ -1,42 +1,6 @@
-// Otto Kristian von Sperling
-// MAT: 12/0131510
-// Lucas Miranda
-//MAT: xx/xxxxxxx
-//###############################################################
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <list>
-#include <utility>
-#include <algorithm>
-#include "network.hpp"	// My rewritten version of it. New parser and all
-
-//######################## DECLARING FUNCTIONS ####################
-std::vector< std::list<int> > buildAdjacencyList(std::vector<VERTEX> &sourceGraph);		// Creates an adjacency list in the form of vector<list<int>>
-void printAdjacencyList(std::vector< std::list< int > > &sourceToPrint);					// Prints the adjacency list of a graph
-void printMaxToMinDegree(std::vector<VERTEX> &adjListSource);							// Prints all vertices with regard to their degrees, from max. to min.
-std::vector<VERTEX> sortMaxToMin(std::vector<VERTEX> &source);							// Sorts a vector of vertices | auxiliary to printMaxToMinDegree()
-int bkSearch(std::vector< std::list<int> > &adjacencyVector, std::list<int> &P, std::list<int> &S, std::list<int> &C); // Bron-Kerbosch implementation
-std::list<int> nthClique(int degree, std::vector< std::list<int> > &adjacencyVector);	//run bkSearch() until find the first maximal of degree n
-// ###################### MAIN ###################################
-int main(int argc, char** argv)
-{
-	std::vector< std::list<int> > adjacencyV;
-	std::list<int> nDegreeClique;
-	std::list<int> P;
-	std::list<int> S;
-	NETWORK G("karate.gml");	
-	adjacencyV = buildAdjacencyList(G.vertex);
+#include "LAB1.hpp"
 
 
-//	printAdjacencyList(adjacencyV);
-//	nDegreeClique = nthClique(5, adjacencyV); 
-//	std::cout << bkSearch(adjacencyVector, P, S, nDegreeClique) << "\n\n"; // bkSearch() works!!!
-
-	return 0;
-}
-
-// ######################## FUNCTIONS ############################
 std::vector< std::list<int> > buildAdjacencyList(std::vector<VERTEX> &sourceGraph)
 {
 	try
@@ -45,11 +9,14 @@ std::vector< std::list<int> > buildAdjacencyList(std::vector<VERTEX> &sourceGrap
 
 		for(std::vector<VERTEX>::iterator it = sourceGraph.begin(); it != sourceGraph.end(); ++it) // goes through the vector for each vertex
 		{
+			(*it).degree = 0;	// reseting vertices degree transform it from directed to undirected(bilateral) graph
 
 			for(std::list< std::pair< int, int > >::iterator jt = (*it).edge.begin(); jt != (*it).edge.end(); ++jt) // goes through the list for each edge
 			{
 				newAdjList[((*it).id) - 1].push_back((*jt).first);	//makes first link	v1 --> v2
+				(*it).degree++;										// registering yet another edge(degree++)
 				newAdjList[((*jt).first) - 1].push_back((*it).id);	//makes second link	v2 --> v1
+				sourceGraph[(*jt).first - 1].degree++;				// registering yet another edge(degree++)
 			}
 		}
 		return newAdjList;
@@ -98,19 +65,15 @@ std::vector<VERTEX> sortMaxToMin(std::vector<VERTEX> &source)
 
 void printMaxToMinDegree(std::vector<VERTEX> &adjListSource)
 {
-	std::vector<VERTEX> toPrint = sortMaxToMin(adjListSource);
+	std::vector<VERTEX> buffer = sortMaxToMin(adjListSource);
+	//std::vector< std::list<int> > toPrint = buildAdjacencyList(buffer);
 	try
 	{
-		for(std::vector<VERTEX>::iterator it = toPrint.begin(); it != toPrint.end(); ++it)
+		for(std::vector<VERTEX>::iterator it = buffer.begin(); it != buffer.end(); ++it)
 		{
-			std::cout << "VERTEX " << (*it).id << std::endl;
-			for(std::list< std::pair< int, int > >::iterator jt = (*it).edge.begin(); jt != (*it).edge.end(); ++jt)
-			{
-				std::cout << "\t\tTARGET " << (*jt).first << " | WEIGHT " << (*jt).second << std::endl;
-			}
-			std::cout << std::endl;
+			std::cout << "VERTEX " << (*it).id << "\t|-> DEGREE = " << (*it).degree << std::endl;
 		}
-		toPrint.clear();
+		buffer.clear();
 	}
 	catch(std::exception e)
 	{
@@ -158,7 +121,7 @@ int bkSearch(std::vector< std::list<int> > &adjacencyVector, std::list<int> &P, 
 	}
 }
 
-std::list<int> nthClique(int degree, std::vector< std::list<int> > &adjacencyVector)	//run bkSearch() until find the first maximal of degree n
+std::list<int> firstNthClique(int degree, std::vector< std::list<int> > &adjacencyVector)	//run bkSearch() until find the first maximal of degree n
 {
 	int degree_inScope = 0;
 	std::list<int> clique;
@@ -181,4 +144,33 @@ std::list<int> nthClique(int degree, std::vector< std::list<int> > &adjacencyVec
 		}
 	}
 	return {};		// returns empty list if no cliques of nth degree are found.
+}
+
+std::vector< std::list<int> > maxClique(std::vector< std::list<int> > &adjacencyVector)
+{
+	int degree_inScope = 0;
+	std::list<int> higherDegree;
+	std::list<int> clique;
+	std::list<int> allCandidates;
+	std::list<int> alreadyVisited;
+	std::vector< std::list<int> > maxClique;
+
+	for(int i = 0; i < adjacencyVector.size(); ++i)
+	{
+		allCandidates = adjacencyVector[i];		// create a list with all adjacent vertices of vertice_in_scope
+		allCandidates.push_front(i + 1);		// adds the vertice_in_scope to the list
+		degree_inScope = bkSearch(adjacencyVector, allCandidates, alreadyVisited, clique);	//calls function to find a maximal clique from vertice_in_scope
+		
+		if(degree_inScope >= higherDegree.back())			// checks whether the new degree found is higher than the previous one
+		{
+			higherDegree.push_back(degree_inScope);			// if so, stack it
+			maxClique.push_back(clique);					// and stack the clique;
+		}
+
+		allCandidates.clear();				// it clears the lists to start looking for an nth clique on the vertice next to the vertice_in_scope.
+		alreadyVisited.clear();
+		clique.clear();
+		degree_inScope = 0;
+	}
+	return maxClique;	// at the end of the loop, the highest degree cliques are stacked and can be returned.
 }
