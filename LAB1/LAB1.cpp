@@ -11,39 +11,27 @@
 #include <algorithm>
 #include "network.hpp"	// My rewritten version of it. New parser and all
 
-// OBS 1. --------- Adjacency Lists ------------------------------
-// Two types of adjacency list are present in the software.
-// One represented by a vector<list<int>>
-// The other as a list<list<int>>
-// This is due some diverse applications of each, which were more suitable for some but not all cases.
-// Thus, taking advantage of the best tools at hand seemed reasonable.
-// ---------------------------------------------------------------
-
-//######################## DEFINING FUNCTIONS ####################
+//######################## DECLARING FUNCTIONS ####################
 std::vector< std::list<int> > buildAdjacencyList(std::vector<VERTEX> &sourceGraph);		// Creates an adjacency list in the form of vector<list<int>>
 void printAdjacencyList(std::vector< std::list< int > > &sourceToPrint);					// Prints the adjacency list of a graph
 void printMaxToMinDegree(std::vector<VERTEX> &adjListSource);							// Prints all vertices with regard to their degrees, from max. to min.
 std::vector<VERTEX> sortMaxToMin(std::vector<VERTEX> &source);							// Sorts a vector of vertices | auxiliary to printMaxToMinDegree()
-void bkSearch(std::vector< std::list<int> > &adjList, std::list<int> &P, std::list<int> &S, std::list<int> &C);
+int bkSearch(std::vector< std::list<int> > &adjacencyVector, std::list<int> &P, std::list<int> &S, std::list<int> &C); // Bron-Kerbosch implementation
+std::list<int> nthClique(int degree, std::vector< std::list<int> > &adjacencyVector);	//run bkSearch() until find the first maximal of degree n
 // ###################### MAIN ###################################
 int main(int argc, char** argv)
 {
-	std::list<int> possibleCliques;
-	std::list<int> allCandidates;
-	std::list<int> alreadyVisited;
-	std::vector< std::list<int> > adjacencyVector;
+	std::vector< std::list<int> > adjacencyV;
+	std::list<int> nDegreeClique;
+	std::list<int> P;
+	std::list<int> S;
 	NETWORK G("karate.gml");	
+	adjacencyV = buildAdjacencyList(G.vertex);
 
-	adjacencyVector = buildAdjacencyList(G.vertex);
-//	printAdjacencyList(adjacencyVector);
-	for(int i = 5; i < G.nvertices; ++i)
-	{
-		allCandidates.push_back(i + 1);
-	}
 
-	std::cout << bkSearch(adjacencyVector, allCandidates, alreadyVisited, possibleCliques) << "\n" << std::endl;
-	for(auto v : possibleCliques)
-		std::cout << v << std::endl;
+//	printAdjacencyList(adjacencyV);
+//	nDegreeClique = nthClique(5, adjacencyV); 
+//	std::cout << bkSearch(adjacencyVector, P, S, nDegreeClique) << "\n\n"; // bkSearch() works!!!
 
 	return 0;
 }
@@ -141,19 +129,21 @@ std::list<int> intersectionOf(std::list<int> a, std::list<int> b)
 
 }
 
-void bkSearch(std::vector< std::list<int> > &adjList, std::list<int> &P, std::list<int> &S, std::list<int> &C)
+int bkSearch(std::vector< std::list<int> > &adjacencyVector, std::list<int> &P, std::list<int> &S, std::list<int> &C)
 {	
 	std::list<int> neighbors;
 	std::list<int> buffer;
+	int degree = 0;
 
 	if((P.size() == 0) && (S.size() == 0))
 	{
-		break;
+		degree = C.size();
+		return degree;
 	}
 	else
 	{
 		C.push_back(P.front());
-		neighbors = adjList [(P.front() - 1)];
+		neighbors = adjacencyVector [(P.front() - 1)];
 		P.pop_front(); 
 
 		buffer = intersectionOf(P, neighbors);
@@ -163,13 +153,32 @@ void bkSearch(std::vector< std::list<int> > &adjList, std::list<int> &P, std::li
 		S = buffer;
 		buffer.clear();
 
-		bkSearch(adjList, P, S, C);
-
+		degree = bkSearch(adjacencyVector, P, S, C);
+		return degree;
 	}
-
 }
 
-void nthClique()	//run bkSearch() until find the first maximal of degree n
+std::list<int> nthClique(int degree, std::vector< std::list<int> > &adjacencyVector)	//run bkSearch() until find the first maximal of degree n
 {
+	int degree_inScope = 0;
+	std::list<int> clique;
+	std::list<int> allCandidates;
+	std::list<int> alreadyVisited;
 
+	for(int i = 0; i < adjacencyVector.size(); ++i)
+	{
+		allCandidates = adjacencyVector[i];		// create a list with all adjacent vertices of vertice_in_scope
+		allCandidates.push_front(i + 1);		// adds the vertice_in_scope to the list
+		degree_inScope = bkSearch(adjacencyVector, allCandidates, alreadyVisited, clique);	//calls function to find a maximal clique from vertice_in_scope
+		if(degree_inScope == degree)			// checks whether the desired degree has been found
+			return clique;						// if so, returns the clique found.
+		else
+		{
+			allCandidates.clear();				// else, it clears the lists to start looking for an nth clique on the vertice next to the vertice_in_scope.
+			alreadyVisited.clear();
+			clique.clear();
+			degree_inScope = 0;
+		}
+	}
+	return {};		// returns empty list if no cliques of nth degree are found.
 }
