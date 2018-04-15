@@ -174,3 +174,40 @@ std::vector< std::list<int> > maxClique(std::vector< std::list<int> > &adjacency
 	}
 	return maxClique;	// at the end of the loop, the highest degree cliques are stacked and can be returned.
 }
+
+bool obeys_Ores(std::vector<std::list<int>> &adjacency_vector)
+{
+	std::list<int>::iterator jt;
+	std::list<int> all_candidates, buffer;
+	std::vector<std::list<int>> non_adjacent;
+	std::vector<std::list<int>>::iterator it;
+
+	// START_FIND non-adjacent list
+	for(it = adjacency_vector.begin(); it != adjacency_vector.end(); ++it) 
+	{
+		for(int i = 1; i <= adjacency_vector.size(); ++i) // populates list with all possible vectors
+		{
+			if(std::find((*it).begin(), (*it).end(), i) == (*it).end())	// if vertice i is not found the adjacency list of current vertice
+				buffer.push_back(i);
+		}
+		non_adjacent.push_back(buffer);
+		buffer.clear();
+	}
+	// END_FIND non-adjacent list
+
+	// START_CHECK Ore's Theorem | d|v1| + d|v2| >= Vn --> Hamiltonian Graph
+	for(int i = 0; i < non_adjacent.size(); ++i)
+	{
+		jt = non_adjacent[i].begin();
+		while(jt != non_adjacent[i].end())
+		{
+			if((adjacency_vector.size() > (adjacency_vector[i].size() + adjacency_vector[(*jt) - 1].size())) && (((*jt) - 1) != i))
+			{
+				std::cout << "\tOre's Theorem is broken between vertices " << (i + 1) << " and " << (*jt) << std::endl;
+				return false;
+			}
+			jt++;
+		}
+		return true;
+	}
+}

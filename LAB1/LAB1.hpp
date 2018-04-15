@@ -14,6 +14,7 @@ int bkSearch(std::vector< std::list<int> > &adjacencyVector, std::list<int> &P, 
 std::list<int> intersectionOf(std::list<int> a, std::list<int> b);					// finds the intersection of two lists
 std::list<int> firstNthClique(int degree, std::vector< std::list<int> > &adjacencyVector);	//run bkSearch() until find the first maximal of degree n
 std::vector< std::list<int> > maxClique(std::vector< std::list<int> > &adjacencyVector); // stacks cliques. Highest Clique comes last.
+bool obeys_Ores(std::vector<std::list<int>> &adjacency_vector);
 //######################## END_FUNCTIONS - ABSTRACT ##################################################################################
 
 //######################## START_DOCOMENTATION #######################################################################################
