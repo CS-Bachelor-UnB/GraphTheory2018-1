@@ -19,7 +19,9 @@ class GRAPH
 		~GRAPH(void);
 
 	private:
-		bool populate_graph(std::fstream *file_ptr);
+		void populate_graph(std::fstream *file_ptr);
+		std::vector<int> tarjan_toposort(void);
+		std::vector<int> khan_toposort(void);
 
 };
 

@@ -60,4 +60,39 @@ GRAPH::populate_graph(fstream *file_ptr)
 		this->adjacency_vector[in_scope].push_back(target);
 		this->incidence_vector[target] += 1;
 	}
+	sort (this->incidence_vector.begin(), this->incidence_vector.end());
+}
+
+vector<vector<int>> GRAPH::tarjan_toposort(void)
+{
+	vector<int> visited;
+	vector<int> to_visit
+	vector<int> result_in_scope;
+	vector<vector<int>> all_sortings;
+
+	for (int i = 0; i < this->incidence_vector.size(); ++i)
+	{
+		if (this->incidence_vector[i] == 0)
+		{
+			to_visit = this->adjacency_vector[i]
+			all_sortings.push_back (sort_from (i, this->adjacency_vector, visited, result_in_scope, to_visit));
+		}
+	}
+
+}
+
+vector<int> GRAPH::sort_from(int vertex_in_scope, vector<vector<int>> &adjacency_vector, vector<int> visited, vector<int> result_in_scope, vector<int> to_visit)
+{
+	if (to_visit == {})
+		return result_in_scope;
+	else
+	{
+		//CONTINUE FROM HERE
+		// HERE IS THE RECURSIVE MAGIC, THINK ABOUT IT
+	}
+}
+
+vector<int> GRAPH::khan_toposort(void)
+{
+
 }
