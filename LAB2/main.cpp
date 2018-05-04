@@ -1,10 +1,11 @@
 //main.cpp
 
-#include "toposort.h"
+#include "toposort.hpp"
 
 using namespace std;
 
 int main (int argc, char **argv)
 {
-	GRAPH G("top_small.txt");
+	GRAPH G("./data/top_small.txt");
+	G.tarjan_toposort();
 }

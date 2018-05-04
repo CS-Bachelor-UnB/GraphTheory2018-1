@@ -2,7 +2,6 @@
 
 using namespace std;
 
-GRAPH::populate_graph(fstream *file_ptr);
 
 GRAPH::GRAPH(void)
 {
@@ -12,8 +11,8 @@ GRAPH::GRAPH(void)
 GRAPH::GRAPH(const char* file_name)
 {
 	fstream file (file_name, fstream::in);
-	file_ptr.is_open() ? this->populate_graph(file) : cout << "\nCouldn't open file for reading...\n";
-	file_ptr.close();
+	file.is_open() ? this->populate_graph(file) : throw ("\nCouldn't open file for reading...\n");
+	file.close();
 }
 
 GRAPH::~GRAPH(void)
@@ -28,7 +27,7 @@ GRAPH::~GRAPH(void)
 	this->incidence_vector.shrink_to_fit();
 }
 
-GRAPH::populate_graph(fstream *file_ptr)
+void GRAPH::populate_graph(fstream &file)
 {
 	string str_from_file;
 	int vertices = 0;
@@ -36,37 +35,30 @@ GRAPH::populate_graph(fstream *file_ptr)
 	int target = 0;
 
 	// get the size of graph from file:
-	getline(file_ptr, str_from_file);
-	vertices = stoi(str_from_file)
+	getline(file, str_from_file);
+	vertices = stoi(str_from_file);
 	this->n_vertices = vertices;
 	
 	// initializing vectors to avoid out_of_bound exceptions
 	 this->adjacency_vector.resize(vertices);
 	 this->incidence_vector.resize(vertices, 0);
-	// for(int i = 0; i < n_vertices; ++i)
-	// {
-	// 	this->adjacency_vector.push_back([0]);
-	// 	this->incidence_vector.push_back(0);
-	// }
-
 	// read from file
-	while(!file_ptr.eof())
+	while(!file.eof())
 	{
-		getline(file_ptr, str_from_file, ' ');
+		getline(file, str_from_file, ' ');
 		in_scope	=	stoi(str_from_file);
-		getline(file_ptr, str_from_file);
+		getline(file, str_from_file);
 		target		=	stoi(str_from_file);
 
 		this->adjacency_vector[in_scope].push_back(target);
 		this->incidence_vector[target] += 1;
 	}
-	sort (this->incidence_vector.begin(), this->incidence_vector.end());
 }
 
 vector<vector<int>> GRAPH::tarjan_toposort(void)
 {
-	vector<int> visited;
-	vector<int> to_visit
+	int size_path = 0;
+	vector<int> to_visit;
 	vector<int> result_in_scope;
 	vector<vector<int>> all_sortings;
 
@@ -74,25 +66,45 @@ vector<vector<int>> GRAPH::tarjan_toposort(void)
 	{
 		if (this->incidence_vector[i] == 0)
 		{
-			to_visit = this->adjacency_vector[i]
-			all_sortings.push_back (sort_from (i, this->adjacency_vector, visited, result_in_scope, to_visit));
+			to_visit = this->adjacency_vector[i];
+			size_path = sort_from (i, this->adjacency_vector, result_in_scope, to_visit);
+			all_sortings.push_back (result_in_scope);
+			result_in_scope.clear();
 		}
 	}
+	return all_sortings;
 
 }
-
-vector<int> GRAPH::sort_from(int vertex_in_scope, vector<vector<int>> &adjacency_vector, vector<int> visited, vector<int> result_in_scope, vector<int> to_visit)
+// AUX_FUNCTIONS_START -----------------------------------------------------------------------------------------------------------------------------------
+int GRAPH::sort_from(int vertex_in_scope, vector<vector<int>> &adjacency_vector, vector<int> &visited, vector<int> &to_visit)
 {
-	if (to_visit == {})
-		return result_in_scope;
+	// The final path found will be stored in the vector ~visited~
+	int size_of_path = 0;
+
+	if (to_visit.empty())
+	{
+		size_of_path = visited.size();
+		return size_of_path;
+	}
 	else
 	{
-		//CONTINUE FROM HERE
-		// HERE IS THE RECURSIVE MAGIC, THINK ABOUT IT
+		visited.push_back(vertex_in_scope);
+		to_visit.insert (to_visit.end(), adjacency_vector[vertex_in_scope].begin(), adjacency_vector[vertex_in_scope].end()); // append
+		difference (to_visit, visited);
+		size_of_path = sort_from (to_visit.back(), adjacency_vector, visited, to_visit);
+		return size_of_path;
 	}
 }
 
-vector<int> GRAPH::khan_toposort(void)
+void GRAPH::difference(vector<int> &a, vector<int> &b)
+{
+	// removes all elements of a from b
+	a.erase( remove_if( begin(a),end(a),
+    [&](int x){return find(begin(b),end(b),x)!=end(b);}), end(a));
+
+}
+// AUX_FUNCTIONS_END --------------------------------------------------------------------------------------------------------------------------------------
+vector<vector<int>> GRAPH::khan_toposort(void)
 {
 
 }
