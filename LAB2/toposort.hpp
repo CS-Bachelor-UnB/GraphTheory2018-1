@@ -8,30 +8,28 @@
 #include <string>
 #include <algorithm>
 
-typedef std::vector< std::vector<int>>  long_vector;
 
 class GRAPH
 {
 	public:
 		int n_vertices;
-		long_vector adjacency_vector;
 		std::vector<int> incidence_vector;
+		std::vector<std::vector<int>> adjacency_vector;
 
 		GRAPH(void);
-		GRAPH(const char* file_name);
+		GRAPH(std::string file_name);
 		~GRAPH(void);
-		long_vector tarjan_toposort(void);
-		long_vector khan_toposort(void);
+		std::vector<int> tarjan_toposort(void);
+		std::vector<int> khan_toposort(void);
 
 	private:
+		void visit(int vertex_in_scope, std::vector<std::vector<int>> &adjacency_vector, std::vector<bool> &visited, std::vector<int> &result);
 		void populate_graph(std::fstream &file);
-		void difference(std::vector<int> &a, std::vector<int> &b);
-		int sort_from(int vertex_in_scope, long_vector &adjacency_vector, std::vector<int> &visited, std::vector<int> &to_visit);
-		//std::vector<int> sort_from(int vertex_in_scope, long_vector &adjacency_vector, std::vector<int> visited, std::vector<int> result_in_scope, std::vector<int> to_visit);
 
 };
 
 #endif
 
 // References:
-// set_difference() in toposort.cpp: https://goo.gl/U6XHYV
+// Graph Theory - Trajan's: https://goo.gl/xDfN3J
+// Timer function: https://goo.gl/GVhymU

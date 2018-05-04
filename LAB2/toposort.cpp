@@ -8,7 +8,7 @@ GRAPH::GRAPH(void)
 	this->n_vertices = 0;
 }
 
-GRAPH::GRAPH(const char* file_name)
+GRAPH::GRAPH(std::string file_name)
 {
 	fstream file (file_name, fstream::in);
 	file.is_open() ? this->populate_graph(file) : throw ("\nCouldn't open file for reading...\n");
@@ -22,7 +22,8 @@ GRAPH::~GRAPH(void)
 		v.clear();
 		v.shrink_to_fit();
 	}
-	
+	this->adjacency_vector.shrink_to_fit();
+
 	this->incidence_vector.clear();
 	this->incidence_vector.shrink_to_fit();
 }
@@ -55,56 +56,57 @@ void GRAPH::populate_graph(fstream &file)
 	}
 }
 
-vector<vector<int>> GRAPH::tarjan_toposort(void)
+vector<int> GRAPH::tarjan_toposort(void)
 {
-	int size_path = 0;
-	vector<int> to_visit;
-	vector<int> result_in_scope;
-	vector<vector<int>> all_sortings;
+	vector<int> result;
+	vector<bool> visited(this->adjacency_vector.size(), false);
 
 	for (int i = 0; i < this->incidence_vector.size(); ++i)
-	{
 		if (this->incidence_vector[i] == 0)
-		{
-			to_visit = this->adjacency_vector[i];
-			size_path = sort_from (i, this->adjacency_vector, result_in_scope, to_visit);
-			all_sortings.push_back (result_in_scope);
-			result_in_scope.clear();
-		}
-	}
-	return all_sortings;
+			visit(i, this->adjacency_vector, visited, result);
+	return result;
 
 }
 // AUX_FUNCTIONS_START -----------------------------------------------------------------------------------------------------------------------------------
-int GRAPH::sort_from(int vertex_in_scope, vector<vector<int>> &adjacency_vector, vector<int> &visited, vector<int> &to_visit)
+void GRAPH::visit (int vertex_in_scope, vector<vector<int>> &adjacency_vector, vector<bool> &visited, vector<int> &result)
 {
 	// The final path found will be stored in the vector ~visited~
 	int size_of_path = 0;
+	vector<int> neighbors;
 
-	if (to_visit.empty())
+	if (visited[vertex_in_scope] == false)
 	{
-		size_of_path = visited.size();
-		return size_of_path;
+		neighbors = adjacency_vector[vertex_in_scope];
+		for (vector<int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+			visit ((*it), adjacency_vector, visited, result);
+		visited[vertex_in_scope] = true;
+		result.insert (result.begin(), vertex_in_scope);
 	}
-	else
-	{
-		visited.push_back(vertex_in_scope);
-		to_visit.insert (to_visit.end(), adjacency_vector[vertex_in_scope].begin(), adjacency_vector[vertex_in_scope].end()); // append
-		difference (to_visit, visited);
-		size_of_path = sort_from (to_visit.back(), adjacency_vector, visited, to_visit);
-		return size_of_path;
-	}
-}
-
-void GRAPH::difference(vector<int> &a, vector<int> &b)
-{
-	// removes all elements of a from b
-	a.erase( remove_if( begin(a),end(a),
-    [&](int x){return find(begin(b),end(b),x)!=end(b);}), end(a));
-
 }
 // AUX_FUNCTIONS_END --------------------------------------------------------------------------------------------------------------------------------------
-vector<vector<int>> GRAPH::khan_toposort(void)
+vector<int> GRAPH::khan_toposort(void)
 {
+	vector<int> result;
+	vector<int> next;
+	vector<int> neighbors;
+	vector<int> incidence(this->incidence_vector);
 
+	for (int i = 0; i < incidence.size(); ++i)
+		if (incidence[i] == 0)
+			next.push_back(i);
+
+	while (!next.empty())
+	{
+		result.push_back(next.back());
+		next.pop_back();
+
+		neighbors = adjacency_vector[result.back()];
+		for (int i = 0; i < neighbors.size(); ++i)
+		{
+			incidence[neighbors[i]] += -1;
+			if (incidence[neighbors[i]] == 0)
+				next.push_back(neighbors[i]);
+		}
+	}
+	return result;
 }
