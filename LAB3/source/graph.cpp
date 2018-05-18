@@ -8,7 +8,6 @@ using namespace std;
 //
 // START_FUNCTIONS	--------------------------------------------------------------------------------------------
 //
-//////////////////////////////////////////////////////
 //	Full Constructor:
 GRAPH::GRAPH(const char* file_name)
 {
@@ -26,9 +25,11 @@ void GRAPH::file_parser(const char* file_name)
 	if (file.is_open ())
 	{
 		string str_buf;
+		char* char_buf;
 		while (!file.eof())
 		{
-			getline (file, str_buf, ' ');
+			file.get (char_buf, 3);
+			str_buf = string (char_buf);
 			//
 			//	TEACHER NODE FOUND:
 			if (str_buf.compare (0, 2/*chars*/, "(P") == 0)
@@ -36,23 +37,24 @@ void GRAPH::file_parser(const char* file_name)
 				//	START_DATA_COLECTION:
 				TEACHER temp_teacher;
 				//
-				//	GET TEACHER INDEX
-				str_buf = str_buf.substr (2, (str_buf.size() - 2));
+				//	GET TEACHER INDEX:
+				getline (file, str_buf, ' ');
+				str_buf = str_buf.substr (0, (str_buf.size() - 1));
 				temp_teacher.id = atoi(str_buf.c_str());
 				str_buf.clear();
 				//
-				//	GET TEACHER SKILLSET
+				//	GET TEACHER SKILLSET:
 				getline (file, str_buf, ')');
 				temp_teacher.skillset = atoi(str_buf.c_str());
 				//
-				//	GET PRIORITY QUEU
+				//	GET PRIORITY QUEU:
 				for (int i = 0; i < 5; ++i)
 				{
 					//	TRASH CHARS
 					getline (file, str_buf, 'E');
 					str_buf.clear();
 					//
-					//	GET PRIORITIES
+					//	GET PRIORITIES:
 					if (i < 4)
 						getline (file, str_buf, ',');
 					else
@@ -69,7 +71,35 @@ void GRAPH::file_parser(const char* file_name)
 			//	SCHOOL NODE FOUND:
 			else if (str_buf.compare (0, 2/*chars*/, "(E") == 0)	//	school node found!
 			{
-
+				//	START DATA COLECTION:
+				SCHOOL temp_school;
+				//
+				//	GET SCHOOL INDEX:
+				getline (file, str_buf, ')');
+				temp_school.id = atoi (str_buf.c_str());
+				str_buf.clear();
+				//
+				//	TRASH CHARS
+				getline (file, str_buf, '(');
+				str_buf.clear();
+				//
+				//	GET SCHOOL REQUIRED SKILLSET:
+				getline (file, str_buf, ')');
+				temp_school.required_skillset = atoi (str_buf.c_str());
+				str_buf.clear();
+				//
+				//	TRASH CHARS
+				getline (file, str_buf, '(');
+				str_buf.clear();
+				//
+				//	GET SCHOOL REQUIRED TEACHERS:
+				getline (file, str_buf, '\n');
+				temp_school.required_teachers = atoi (str_buf.c_str());
+				str_buf.clear();
+				//	END DATA COLECTION;
+				//
+				//	POPULATE NODE IN GRAPH:
+				this->school.push_back (temp_school);
 			}
 			//
 			//	COMMENT (OR EMPTY LINE?)
@@ -89,4 +119,4 @@ void GRAPH::file_parser(const char* file_name)
 	}
 }
 //
-//////////////////////////////////////////////////////
+////////////////////////////////////////////////////////

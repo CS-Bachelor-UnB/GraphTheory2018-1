@@ -10,8 +10,9 @@ class GRAPH
 public:
 	std::vector<TEACHER> teacher;
 	std::vector<SCHOOL> school;
-public:
+	//
 	GRAPH(const char* file_name);
+	//
 private:
 	void file_parser(const char* file_name);
 };

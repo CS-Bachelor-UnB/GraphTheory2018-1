@@ -7,11 +7,12 @@
 class SCHOOL
 {
 public:
+	int id;
 	int required_teachers;
 	int required_skillset;
 public:
 	SCHOOL();
-	SCHOOL(int teachers,int skills);
+	SCHOOL(int id, int teachers,int skills);
 	~SCHOOL();
 };
 

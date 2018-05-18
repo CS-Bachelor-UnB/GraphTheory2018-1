@@ -13,11 +13,10 @@ public:
 	int											skillset;			// == habilitações
 	std::vector<int>							availability;		// == escolas onde gostaria de atuar
 	// std::vector<std::pair<int, std::string>> 	evaluations;		// pair(int grade, string date)
-
+	//
 public:
 	TEACHER();
 	TEACHER(int id, int skillset, std::vector<int> &availability);
 	~TEACHER();
-	
 };
 #endif
