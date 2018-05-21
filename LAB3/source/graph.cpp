@@ -145,12 +145,12 @@ void GRAPH::stable_match(void)
 	//
 	//	PREPARING THE DATA STRUCTURES: ----------------------------------------------------------------------------------------------------
 	//		>populate the vectors to be used in the match-making:
+	pair<bool, int> temp_flag (false, 0);
 	for (int i = 0; i < NUM_TEACHERS; ++i)
 	{
 		//	the first node of each teacher will be a flag for stable match found.
 		//	> reserving space and setting flag:
 		teacher_match[i].reserve(6);
-		pair<bool, int> temp_flag (false, 0);
 		teacher_match[i].push_back (temp_flag);
 		//	> done setting flag;
 		//	
@@ -175,6 +175,16 @@ void GRAPH::stable_match(void)
 			}
 		}
 	}
+	//	> instantiate empty nodes (to avoid segmentation fault):
+	for (int i = 0; i < NUM_SCHOOLS; ++i)
+	{
+		if (school_match[i].empty())
+		{
+			temp_flag.first		= true;
+			temp_flag.second	= NUM_TEACHERS * NUM_TEACHERS;
+			school_match[i].push_back (temp_flag);
+		}
+	}
 	//		at this point, we know that every node in both school_match and teacher_match
 	//		has been checked for the skillset criteria, which means that no further checking is
 	//		necessary. Furthermore, the priority order in teacher_match has been kept.
@@ -182,12 +192,19 @@ void GRAPH::stable_match(void)
 	//--------------------------------------------------------------------------------------------------------------------------------------
 	//
 	//	MATCH-MAKING:
-	bool all_schools_matched = false;
+	bool all_schools_matched;
 	for (int i = 0; i < NUM_SCHOOLS; ++i)
 	{
+		//	> control whether all schools have been matched with 1 teacher (for now):
+		//	if one unmatched school is found, it sets the flag to false.
+		if (i == 0)
+			all_schools_matched = true;
+		//
 		// if a school still has no teacher assigned:
 		if (school_match[i][0].first == false)
 		{
+			//	> set the control flag:
+			all_schools_matched = false;
 			//	> find a teacher to whom the school still hasn't made an offer:
 			for (int j = 1; j < school_match[i].size(); ++j)
 			{
@@ -206,7 +223,8 @@ void GRAPH::stable_match(void)
 						for (int k = 1; k < teacher_match[teacher_index].size(); ++k)
 						{
 							if ((teacher_match[teacher_index][k].second == current_match_school) && (is_more_desirable == true))
-								break;
+								break;	// go to next candidate teacher in school_match;
+							//
 							else if ((teacher_match[teacher_index][k].second == current_match_school) && (is_more_desirable == false))
 							{
 								//	> undo the previous, less desirable match:
@@ -215,11 +233,19 @@ void GRAPH::stable_match(void)
 								school_match[prev_school_index][0].second	= 0;
 								break;
 							}
-							if ((teacher_match[teacher_index][k].second == (i+1)/*== id of school in scope*/) && (is_more_desirable == true))
+							//
+							//
+							if ((teacher_match[teacher_index][k].first == false) && (teacher_match[teacher_index][k].second == (i+1)/*== id of school in scope*/) && (is_more_desirable == true))
 							{
 								//	> set school in scope as the match for the teacher:
 								teacher_match[teacher_index][0].first	= true;
 								teacher_match[teacher_index][0].second	= (i+1);
+								for (int w = 1; w < teacher_match[teacher_index].size(); ++w)
+									if (teacher_match[teacher_index][w].second == (i+1))
+									{
+										teacher_match[teacher_index][w].first = true;
+										break;
+									}
 								//
 								//	> flag the current node:	
 								teacher_match[teacher_index][k].first	= true;
@@ -233,14 +259,21 @@ void GRAPH::stable_match(void)
 								//
 								//	> set is_more_desirable as false since a more desirable match has been found:
 								is_more_desirable = false;
+								next_teacher = false;
 							}
 						}// end_of - is school in scope more desirable;
 					}// end_of - check and remove any previous....;
-					else
+					else if (teacher_match[teacher_index][0].first == false)
 					{
 						//	> set school in scope as the match for the teacher:
 						teacher_match[teacher_index][0].first	= true;
 						teacher_match[teacher_index][0].second	= (i+1);
+						for (int w = 1; w < teacher_match[teacher_index].size(); ++w)
+							if (teacher_match[teacher_index][w].second == (i+1))
+							{
+								teacher_match[teacher_index][w].first = true;
+								break;
+							}
 						//
 						// > flag the teacher candidacy in school_match:
 						school_match[i][j].first = true;
@@ -257,7 +290,12 @@ void GRAPH::stable_match(void)
 					break;
 			}// end_of - find a teacher to whom the school...;
 		}// end_of - if a school still has no teacher assigned;
-	}
+		//	> check whether all schools have been matched at the end of the round:
+		if ((i == (NUM_SCHOOLS - 1)) && (all_schools_matched == true))
+			break;
+		else if (i == (NUM_SCHOOLS - 1) && (all_schools_matched == false))
+			i = 0;	//	go to next round;
+	}// end_of - bigger loop
 }//	end_stable_match();
 //
 ///////////////////////////////////////////////////////////
