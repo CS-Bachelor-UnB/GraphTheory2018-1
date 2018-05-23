@@ -6,11 +6,13 @@
 #include "./school/school.hpp"
 #include <utility>
 //
+using namespace std;
+//
 class GRAPH
 {
 public:
-	std::vector<TEACHER> teacher;
-	std::vector<SCHOOL> school;
+	vector<TEACHER> teacher;
+	vector<SCHOOL> school;
 	//
 	GRAPH(const char* file_name);
 	// std::vector<std::pair<int, int>> maximum_match(void);
@@ -18,5 +20,6 @@ public:
 	//
 private:
 	void file_parser(const char* file_name);
+	void prep_data(vector<vector<pair<bool, int>>> &school_match, vector<vector<pair<bool, int>>> &teacher_match);
 };
 #endif
