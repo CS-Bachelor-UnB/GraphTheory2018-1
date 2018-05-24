@@ -5,12 +5,78 @@
 #include "graph.hpp"
 //
 #define NUM_TEACHERS 	100
-#define NUM_SCHOOLS		50
-#define INFINITE		1000
+#define NUM_SCHOOLS	50
+#define INFINITE	1000
 
 using namespace std;
 //
-// START_FUNCTIONS	--------------------------------------------------------------------------------------------
+// SCHOOL_METHODS_START	--------------------------------------------------------------------------------------------
+//
+//      Empty Constructor:
+SCHOOL::SCHOOL()
+{
+        this->id		=       0;
+        this->required_teachers =       0;
+        this->required_skillset =       0;
+}
+//
+//////////////////////////////////////////////////////////
+//      Full Constructor:
+SCHOOL::SCHOOL(int id, int teachers,int skills)
+{
+        this->id                =       id;
+        this->required_teachers =       teachers;
+        this->required_skillset =       skills;
+	this->assigned_teachers.reserve(this->required_teachers);
+	
+}  
+//  
+/////////////////////////////////////////////////////////
+//      Destructor: 
+SCHOOL::~SCHOOL()
+{
+        //      do nothing?
+}   
+//
+////////////////////////////////////////////////////////
+// SCHOOL_METHODS_END		--------------------------------------------------------------------------------------------
+
+// TEACHER_METHODS_START	--------------------------------------------------------------------------------------------
+//
+//      Empty Constructor:
+TEACHER::TEACHER()
+{
+        this->id                                =        0;
+        this->skillset                  =        0;
+        this->availability.reserve      (5);
+        // this->evaluations.reserve    (0);
+}
+//
+///////////////////////////////////////////////////////////////
+//      Full Constructor:
+TEACHER::TEACHER(int id, int skillset, std::vector<int> &availability)
+{
+        this->id                =       id;
+        this->skillset  =       skillset;
+        this->availability.reserve (availability.size());
+        this->availability      = availability;
+}
+//
+/////////////////////////////////////////////////////////////
+//      Destructor:
+TEACHER::~TEACHER()
+{
+        this->availability.clear ();
+        this->availability.shrink_to_fit ();
+
+        // this->evaluations.clear ();
+        // this->evaluations.shrink_to_fit ();
+}
+//
+/////////////////////////////////////////////////////////////
+// TEACHER_METHODS_END	--------------------------------------------------------------------------------------------
+//
+// GRAPH METHODS_START	--------------------------------------------------------------------------------------------
 //
 //	Full Constructor:
 GRAPH::GRAPH(const char* file_name)
@@ -223,55 +289,6 @@ void GRAPH::stable_match(void)
 								is_more_desirable = true;
 								next_teacher = false;	
 							}
-							//
-							/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-							//	IF the PRIORITY QUEU is not inverted by the parser:
-							// if ((teacher_match[teacher_index][k].second == current_match_school) && (is_more_desirable == false /*originally true*/))
-							// 	break;	// go to next candidate teacher in school_match;
-							// //
-							// else if ((teacher_match[teacher_index][k].second == current_match_school) && (is_more_desirable == true /*orig. false*/))
-							// {
-							// 	//	> undo the previous, less desirable match:
-							// 	int prev_school_index = current_match_school - 1;
-							// 	school_match[prev_school_index][0].first	= false; 
-							// 	school_match[prev_school_index][0].second	= 0;
-							// 	//	trying - set the teachers flag back to false:
-							// 	for (int w = 0; w < school_match[prev_school_index].size(); ++w)
-							// 	{
-							// 		if (school_match[prev_school_index][w].second == (teacher_index+1))
-							// 			school_match[prev_school_index][w].first = false;
-							// 	}
-							// 	break;
-							// }
-							// //
-							// //
-							// if ((teacher_match[teacher_index][k].first == false) && (teacher_match[teacher_index][k].second == (i+1)/*== id of school in scope*/) && (is_more_desirable == false /*orig. true*/))
-							// {
-							// 	//	> set school in scope as the match for the teacher:
-							// 	teacher_match[teacher_index][0].first	= true;
-							// 	teacher_match[teacher_index][0].second	= (i+1);
-							// 	for (int w = 1; w < teacher_match[teacher_index].size(); ++w)
-							// 		if (teacher_match[teacher_index][w].second == (i+1))
-							// 		{
-							// 			teacher_match[teacher_index][w].first = true;
-							// 			break;
-							// 		}
-							// 	//
-							// 	//	> flag the current node:	
-							// 	teacher_match[teacher_index][k].first	= true;
-							// 	//
-							// 	// > flag the teacher candidacy in school_match:
-							// 	school_match[i][j].first = true;
-							// 	//
-							// 	//	> flag and point the stability flag in school_match for the current school to the current teacher:
-							// 	school_match[i][0].first	= true;
-							// 	school_match[i][0].second	= school_match[i][j].second;
-							// 	//
-							// 	//	> set is_more_desirable as false since a more desirable match has been found:
-							// 	is_more_desirable = true /*orig. false*/;
-							// 	next_teacher = false;
-							// }
-							/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 						}// end_of - is school in scope more desirable;
 					}// end_of - check and remove any previous....;
 					else if (teacher_match[teacher_index][0].first == false)
