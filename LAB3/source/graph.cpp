@@ -5,12 +5,69 @@
 #include "graph.hpp"
 //
 #define NUM_TEACHERS 	100
-#define NUM_SCHOOLS		50
-#define INFINITE		1000
+#define NUM_SCHOOLS	50
+#define INFINITE	1000
 
 using namespace std;
 //
-// START_FUNCTIONS	--------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////
+//     SCHOOL Full Constructor:
+SCHOOL::SCHOOL(int id, int teachers,int skills)
+{
+        this->id                = id;
+        this->required_teachers = teachers;
+        this->required_skillset = skills;
+	vector<int> temp (teachers, INFINITE);
+	this->assigned_teachers = temp;
+}
+//
+/////////////////////////////////////////////////////////
+//	SCHOOL Empty Constructor:
+SCHOOL::SCHOOL()
+{
+	this->id		= INFINITE;
+	this->required_teachers	= 0;
+	this->required_skillset	= 0;
+	this->assigned_teachers.reserve(2);
+}
+//
+/////////////////////////////////////////////////////////
+//	SCHOOL Destructor:
+SCHOOL::~SCHOOL()
+{
+	vector<int>().swap (this->assigned_teachers);
+}
+//
+////////////////////////////////////////////////////////
+//      TEACHER Full Constructor:
+TEACHER::TEACHER(int id, int skillset, std::vector<int> &availability)
+{
+        this->id                = id;
+        this->skillset  	= skillset;
+        this->availability.reserve (availability.size());
+        this->availability      = availability;
+	this->match		= INFINITE;
+}
+//
+///////////////////////////////////////////////////////
+//	TEACHER Empty Constructor:
+TEACHER::TEACHER()
+{
+	this->id		= INFINITE;
+	this->skillset		= 0;
+	this->availability.reserve (5);
+	this->match		= INFINITE;
+}
+//
+///////////////////////////////////////////////////////
+//	TEACHER Destructor
+TEACHER::~TEACHER()
+{
+	vector<int>().swap (this->availability);
+}
+//
+///////////////////////////////////////////////////////
+// GRAPH METHODS_START	-------------------------------
 //
 //	Full Constructor:
 GRAPH::GRAPH(const char* file_name)
@@ -63,7 +120,6 @@ void GRAPH::file_parser(const char* file_name)
 						getline (file, str_buf, ',');
 					else
 						getline (file, str_buf, '\n');
-					// temp_teacher.availability.push_back (atoi (str_buf.c_str()));
 					temp_teacher.availability.insert (temp_teacher.availability.begin(), atoi (str_buf.c_str()));	//	trying insert front, perhaps more trials for matching will run?
 					str_buf.clear();
 				}
@@ -105,6 +161,8 @@ void GRAPH::file_parser(const char* file_name)
 				//
 				//	POPULATE NODE IN GRAPH:
 				this->school.push_back (temp_school);
+				vector<int> temp (temp_school.required_teachers, INFINITE);
+				this->school.back().assigned_teachers = temp;
 			}
 			//
 			//	COMMENT (OR EMPTY LINE?)
@@ -115,6 +173,7 @@ void GRAPH::file_parser(const char* file_name)
 			}
 		}//	FILE.EOF
 		file.close ();
+		//
 	}
 	//	FILE.IS_OPEN
 	else
@@ -125,270 +184,61 @@ void GRAPH::file_parser(const char* file_name)
 }
 //
 ////////////////////////////////////////////////////////////
-//	EXTENDED STABLE MATCH (with indiference) - (GALE-SHAPELY) IRVING'S ALGORITHM[2]:
-//	(Weakly Stable)
+//	STABLE MATCH - (GALE-SHAPELY) 
 void GRAPH::stable_match(void)
 {
-	//	START:
-	vector<vector<pair<bool, int>>> school_match (50);		// 	flags which teacher the school has been matched with, teacher's id(not the index in vector) is pair.second
-	vector<vector<pair<bool, int>>> teacher_match (100);	//	flags which school the teacher has been matched with, school's id(not the index) is pair.second
-	//	PREPARE DATA STRUCTURES:
-	prep_data(school_match, teacher_match);
-	//
-	//	MATCH-MAKING:
-	bool all_schools_matched;
-	int round = 0;
-	for (int i = 0; i < NUM_SCHOOLS; ++i)
-	{
-		//	> control whether all schools have been matched with 1 teacher (for now):
-		//	if one unmatched school is found, it sets the flag to false.
-		if (i == 0)
-			all_schools_matched = true;
-		//
-		// if a school still has no teacher assigned:
-		if (school_match[i][0].first == false)
-		{
-			//	> set the control flag:
-			all_schools_matched = false;
-			//	> find a teacher to whom the school still hasn't made an offer:
-			for (int j = 1; j < school_match[i].size(); ++j)
-			{
-				bool next_teacher = true;
-				if (school_match[i][j].first == false)	// has this teacher been proposed to?
-				{
-					int teacher_index = school_match[i][j].second - 1;
-					//
-					//	> check and remove any previous match to the current teacher if the current school is more desirable:
-					//	  (also, if only one teacher has given availability, make him a match and move on)
-					if (teacher_match[teacher_index][0].first == true && round > 0)	//	has a previous matching?
-					{
-						// bool is_more_desirable 		= true;
-						bool is_more_desirable 		= false;	// trying priority queu inversion;
-						int current_match_school 	= teacher_match[teacher_index][0].second;
-						//
-						//	> find out if the school in scope is more desirable than the previous match:
-						if (school_match[i].size() < 2)	// if only one teacher has made himself available:
-							is_more_desirable = true;
-						for (int k = 1; k < teacher_match[teacher_index].size(); ++k)
-						{
-							//	dealing with the current match:
-							if (teacher_match[teacher_index][k].second == current_match_school && is_more_desirable == false)
-							{
-								is_more_desirable = true;
+	int current 		= 0;
+	int vacancy		= 0;
+	bool all_matched 	= true;
+	bool first_run		= true;
+	while (true)	{
+		if ((vacancy <= this->school[current].required_teachers -1) && (this->school[current].assigned_teachers[vacancy] == INFINITE))	{
+			all_matched = false;
+			//	look for available teacher that meets skill requirement:
+			bool next_teacher = true;
+			for (int scope = 0; scope < NUM_TEACHERS; scope++)	{
+				//	check if school is in teacher's priority queu:
+				vector<int>::iterator it = find (this->teacher[scope].availability.begin(), this->teacher[scope].availability.end(), this->school[current].id);
+				if (it != this->teacher[scope].availability.end())	{	
+						//	check for previous matchings and define whether current school is more desirable:
+					if (this->teacher[scope].match != INFINITE)	{
+						if  (true)	{
+						//	is current school more desirable?:
+							if (it >  find (this->teacher[scope].availability.begin(), this->teacher[scope].availability.end(), this->teacher[scope].match) && !first_run) {
+								this->school[this->teacher[scope].match -1].assigned_teachers[vacancy] = INFINITE;
+								this->school[current].assigned_teachers[vacancy] = this->teacher[scope].id;
+								this->teacher[scope].match = this->school[current].id;
+								next_teacher = false;
 							}
-							else if (teacher_match[teacher_index][k].second == current_match_school && is_more_desirable == true)
-							{
-								int prev_school_index = current_match_school - 1;
-								school_match[prev_school_index][0].first	= false; 
-								school_match[prev_school_index][0].second	= 0;
-								//	trying - set the teachers flag back to false:
-								for (int w = 0; w < school_match[prev_school_index].size(); ++w)
-								{
-									if (school_match[prev_school_index][w].second == (teacher_index+1))
-									{
-										school_match[prev_school_index][w].first = false;
-										break;
-									}
-								}
-								if (school_match[i].size() > 2)
-								break;	
-							}
-							//
-							//	dealing with the new match:
-							if ((teacher_match[teacher_index][k].second == (i+1)/*== id of school in scope*/) && (is_more_desirable == false))
-								break;
-							else if ((teacher_match[teacher_index][k].second == (i+1)) && (is_more_desirable == true))
-							{
-								//	> set school in scope as the match for the teacher:
-								teacher_match[teacher_index][0].first	= true;
-								teacher_match[teacher_index][0].second	= (i+1);
-								for (int w = 1; w < teacher_match[teacher_index].size(); ++w)
-									if (teacher_match[teacher_index][w].second == (i+1))
-									{
-										teacher_match[teacher_index][w].first = true;
-										break;
-									}
-								//
-								//	> flag the current node:	
-								teacher_match[teacher_index][k].first	= true;
-								//
-								// > flag the teacher candidacy in school_match:
-								school_match[i][j].first = true;
-								//
-								//	> flag and point the stability flag in school_match for the current school to the current teacher:
-								school_match[i][0].first	= true;
-								school_match[i][0].second	= school_match[i][j].second;
-								//
-								//	> set is_more_desirable as false since a more desirable match has been found:
-								is_more_desirable = true;
-								next_teacher = false;	
-							}
-							//
-							/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-							//	IF the PRIORITY QUEU is not inverted by the parser:
-							// if ((teacher_match[teacher_index][k].second == current_match_school) && (is_more_desirable == false /*originally true*/))
-							// 	break;	// go to next candidate teacher in school_match;
-							// //
-							// else if ((teacher_match[teacher_index][k].second == current_match_school) && (is_more_desirable == true /*orig. false*/))
-							// {
-							// 	//	> undo the previous, less desirable match:
-							// 	int prev_school_index = current_match_school - 1;
-							// 	school_match[prev_school_index][0].first	= false; 
-							// 	school_match[prev_school_index][0].second	= 0;
-							// 	//	trying - set the teachers flag back to false:
-							// 	for (int w = 0; w < school_match[prev_school_index].size(); ++w)
-							// 	{
-							// 		if (school_match[prev_school_index][w].second == (teacher_index+1))
-							// 			school_match[prev_school_index][w].first = false;
-							// 	}
-							// 	break;
-							// }
-							// //
-							// //
-							// if ((teacher_match[teacher_index][k].first == false) && (teacher_match[teacher_index][k].second == (i+1)/*== id of school in scope*/) && (is_more_desirable == false /*orig. true*/))
-							// {
-							// 	//	> set school in scope as the match for the teacher:
-							// 	teacher_match[teacher_index][0].first	= true;
-							// 	teacher_match[teacher_index][0].second	= (i+1);
-							// 	for (int w = 1; w < teacher_match[teacher_index].size(); ++w)
-							// 		if (teacher_match[teacher_index][w].second == (i+1))
-							// 		{
-							// 			teacher_match[teacher_index][w].first = true;
-							// 			break;
-							// 		}
-							// 	//
-							// 	//	> flag the current node:	
-							// 	teacher_match[teacher_index][k].first	= true;
-							// 	//
-							// 	// > flag the teacher candidacy in school_match:
-							// 	school_match[i][j].first = true;
-							// 	//
-							// 	//	> flag and point the stability flag in school_match for the current school to the current teacher:
-							// 	school_match[i][0].first	= true;
-							// 	school_match[i][0].second	= school_match[i][j].second;
-							// 	//
-							// 	//	> set is_more_desirable as false since a more desirable match has been found:
-							// 	is_more_desirable = true /*orig. false*/;
-							// 	next_teacher = false;
-							// }
-							/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-						}// end_of - is school in scope more desirable;
-					}// end_of - check and remove any previous....;
-					else if (teacher_match[teacher_index][0].first == false)
-					{
-						//	> set school in scope as the match for the teacher:
-						teacher_match[teacher_index][0].first	= true;
-						teacher_match[teacher_index][0].second	= (i+1);
-						for (int w = 1; w < teacher_match[teacher_index].size(); ++w)
-							if (teacher_match[teacher_index][w].second == (i+1))
-							{
-								teacher_match[teacher_index][w].first = true;
-								break;
-							}
+						}
 						//
-						// > flag the teacher candidacy in school_match:
-						school_match[i][j].first = true;
-						//
-						//	> flag and point the stability flag in school_match for the current school to the current teacher:
-						school_match[i][0].first	= true;
-						school_match[i][0].second	= school_match[i][j].second;
-						//
-						//	> set flag to end the search for a teacher that the school hasn;t made and offer to yet:
+					} else	{	// teacher has no previous matching:
+						this->teacher[scope].match = this->school[current].id;
+						this->school[current].assigned_teachers[vacancy] = this->teacher[scope].id;
 						next_teacher = false;
 					}
-				}// end_of - has the teacher been proposed to;
-				if (next_teacher == false)
-					break;
-			}// end_of - find a teacher to whom the school...;
-		}// end_of - if a school still has no teacher assigned;
-		//	> check whether all schools have been matched at the end of the round:
-		if ((i == (NUM_SCHOOLS - 1)) && (all_schools_matched == true))
-			break;
-		else if (i == (NUM_SCHOOLS - 1) && (all_schools_matched == false))
-		{
-			i = 0;	//	go to next round;
-			round++;
-		}
-	}// end_of - bigger loop
-}//	end_stable_match();
-//
-///////////////////////////////////////////////////////////
-//	PREPARING DATA STRUCTURES FOR MATCH-MAKING:
-void GRAPH::prep_data(vector<vector<pair<bool, int>>> &school_match, vector<vector<pair<bool, int>>> &teacher_match)
-{
-	//		>populate the vectors to be used in the match-making:
-	pair<bool, int> temp_flag (false, INFINITE);
-	for (int i = 0; i < NUM_TEACHERS; ++i)
-	{
-		//	the first node of each teacher will be a flag for stable match found.
-		//	> reserving space and setting flag:
-		teacher_match[i].reserve(6);
-		teacher_match[i].push_back (temp_flag);
-		//	> done setting flag;
-		//	
-		for (int j = 0; j < this->teacher[i].availability.size()/*list of priority*/; ++j)
-		{
-			// > check whether the teacher in scope meets the criteria to be a canditade for school j:
-			if (this->teacher[i].skillset >= this->school[(this->teacher[i].availability[j])-1].required_skillset)
-			{
-				//	create candidacy for teacher in scope with school j.
-				pair<bool, int>	temp_t (false, this->teacher[i].availability[j]);
-				teacher_match[i].push_back (temp_t);
-				//
-				//	since the teachers has interest in some schools in particular, we add the teacher to the list
-				//	of possible candidates for the school j. If it's the first addition to the vector,
-				//	we also set the stability flag for it.
-				//	> check and set flag:
-				if (school_match[(this->teacher[i].availability[j])-1/*(school's id)-1 == index in vector*/].empty())
-					school_match[(this->teacher[i].availability[j])-1/*(school's id)-1 == index in vector*/].push_back (temp_flag);
-				//	> populate school vector if teacher meets criteria:
-					pair<bool, int> temp_s (false, i + 1/*(teacher's id) == index in vector + 1*/);
-					school_match[(this->teacher[i].availability[j])-1/*(school's id)-1 == index in vector*/].push_back (temp_s);
+				} // end: skillset requirement check;
+					if (next_teacher == false)	{
+						break;	}
+			} // end: look for available teacher;
+		}  // end: if school[current] has no teacher assigned;
+		//	CONTROL UNIT:
+			if (current < NUM_SCHOOLS -1)	{
+				current++;	// go to next school;
+			} else if (all_matched == true && vacancy == 0)	{
+				vacancy++;	// fill up second vacancy in schools;
+				current = 0;	// start next matching round;
+				first_run = false;
+			} else	if (all_matched != true)	{
+				current = 0;
+				all_matched = true;
+				first_run = false;
+			} else	{
+				break;
 			}
-		}
-	}
-	//	> instantiate empty nodes (to avoid segmentation fault):
-	for (int i = 0; i < NUM_SCHOOLS; ++i)
-	{
-		if (school_match[i].empty())
-		{
-			temp_flag.first		= false;
-			temp_flag.second	= INFINITE;
-			school_match[i].push_back (temp_flag);
-		}
-	}
-	//
-	//	SORTING SCHOOL_MATCH based on the number of teachers that have given availability:
-	//	- DO SORTING HERE -
-	//
-	//		at this point, we know that every node in both school_match and teacher_match
-	//		has been checked for the skillset criteria, which means that no further checking is
-	//		necessary. Furthermore, the priority order in teacher_match has been kept (but inverted for now).
+
+	}	
 }
-///////////////////////////////////////////////////////////
-//	MIXIMUM_MATCH - HOPCROFT KARP ALGORITHM[1]:
-// https://github.com/vermagav/hopcroft-karp
-// vector<pair<int, int>> GRAPH::maximum_match(void)
-// {
-// 	vector<pair<int, int>> maximum_match;	
-// }
-//
-//////////////////////////////////////////////////////////
-//	AUXILIARY METHODS:
-//
-//	BFS - returns true if there is an augmenting path
-// bool GRAPH::bfs(void)
-// {
-
-// }
-//
-//	DFS - adds augmenting path if there is one
-// bool GRAPH::dfs(int alpha)
-// {
-
-// }
-//
-//////////////////////////////////////////////////////////
 //	BIBLIOGRAPHY
 //	[1] HOPCROFT KARP ALGORITHM - https://www.geeksforgeeks.org/hopcroft-karp-algorithm-for-maximum-matching-set-1-introduction/
 //	[2] GALE-SHAPELY ALGORITHM 	- https://en.wikipedia.org/wiki/Stable_marriage_problem
