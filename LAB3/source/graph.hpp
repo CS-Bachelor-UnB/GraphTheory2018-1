@@ -44,6 +44,7 @@ public:
 	//
 	GRAPH(const char* file_name);
 	void stable_match(void);
+	void print(void);
 	//
 private:
 	void file_parser(const char* file_name);

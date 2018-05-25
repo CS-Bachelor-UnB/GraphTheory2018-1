@@ -202,7 +202,7 @@ void GRAPH::stable_match(void)
 				if (it != this->teacher[scope].availability.end())	{	
 						//	check for previous matchings and define whether current school is more desirable:
 					if (this->teacher[scope].match != INFINITE)	{
-						if  (true)	{
+						if  (this->teacher[scope].skillset == this->school[current].required_skillset)	{
 						//	is current school more desirable?:
 							if (it >  find (this->teacher[scope].availability.begin(), this->teacher[scope].availability.end(), this->teacher[scope].match) && !first_run) {
 								this->school[this->teacher[scope].match -1].assigned_teachers[vacancy] = INFINITE;
@@ -239,6 +239,18 @@ void GRAPH::stable_match(void)
 
 	}	
 }
-//	BIBLIOGRAPHY
-//	[1] HOPCROFT KARP ALGORITHM - https://www.geeksforgeeks.org/hopcroft-karp-algorithm-for-maximum-matching-set-1-introduction/
-//	[2] GALE-SHAPELY ALGORITHM 	- https://en.wikipedia.org/wiki/Stable_marriage_problem
+//
+//////////////////////////////////////////////////////////////////////
+//	PRINT OUT MATCH:
+void GRAPH::print()
+{
+	cout << "MATCHED (SCHOOL - TEACHERS)" << endl;
+	cout << "\tSCHOOL ID\tTEACHERS required\tTEACHER ID" << endl;
+	for (int i = 0; i < this->school.size(); ++i)
+	{
+		cout << "\t" << this->school[i].id << "\t\t" << this->school[i].required_teachers << "\t\t\t";
+		for (int j = 0; j < this->school[i].required_teachers; ++j)
+			cout << " | " << this->school[i].assigned_teachers[j];
+	cout << " |"  << endl;
+	}
+}
