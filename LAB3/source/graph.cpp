@@ -10,7 +10,6 @@
 
 using namespace std;
 //
-<<<<<<< HEAD
 //////////////////////////////////////////////////////////
 //     SCHOOL Full Constructor:
 SCHOOL::SCHOOL(int id, int teachers,int skills)
@@ -185,10 +184,9 @@ void GRAPH::file_parser(const char* file_name)
 }
 //
 ////////////////////////////////////////////////////////////
-//	STABLE MATCH - (GALE-SHAPELY) 
+//	STABLE MATCH  
 void GRAPH::stable_match(void)
 {
-<<<<<<< HEAD
 	int current 		= 0;
 	int vacancy		= 0;
 	bool all_matched 	= true;
